@@ -110,6 +110,7 @@ impl Solution {
 **Time:** O(n) — one pass over the list, and each map lookup/insert is O(1) on
 average.   **Space:** O(n) — in the worst case we store almost every number in the
 map before finding the pair.
+**Syntax notes:** [solution.rs.md](solution.rs.md)
 
 ## Remember This
 When a problem asks *"is there an element with property X?"* and you're tempted to

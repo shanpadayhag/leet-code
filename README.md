@@ -17,3 +17,10 @@ re-derive it, and **document** it well enough to grab the answer at a glance lat
 
 Concepts are explained once and linked everywhere they're used. See the
 [glossary index](glossary/README.md).
+
+## Languages
+
+Per-language syntax handbooks grow as solutions are added — every piece of
+unfamiliar syntax is explained once and linked thereafter.
+
+- [Rust](languages/rust.md)

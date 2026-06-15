@@ -38,6 +38,10 @@ the instant you hear the name.
 > many keys land in the same spot and it slows down — but for everyday use you can
 > treat it as instant.
 
+## In code
+How each language spells this concept:
+- Rust: [`HashMap<K, V>`](../languages/rust.md#hashmap)
+
 ## Related
 - [Big-O notation](big-o-notation.md)
 
