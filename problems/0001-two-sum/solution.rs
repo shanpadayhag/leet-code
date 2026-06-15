@@ -1,0 +1,17 @@
+use std::collections::HashMap;
+
+impl Solution {
+    pub fn two_sum(numbers: Vec<i32>, target: i32) -> Vec<i32> {
+        let mut index_of_seen_value: HashMap<i32, i32> = HashMap::new();
+
+        for (current_index, &current_value) in numbers.iter().enumerate() {
+            let needed_value = target - current_value;
+            if let Some(&earlier_index) = index_of_seen_value.get(&needed_value) {
+                return vec![earlier_index, current_index as i32];
+            }
+            index_of_seen_value.insert(current_value, current_index as i32);
+        }
+
+        vec![]
+    }
+}
