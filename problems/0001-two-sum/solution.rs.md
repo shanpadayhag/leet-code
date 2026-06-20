@@ -5,69 +5,121 @@ the [Rust handbook](../../languages/rust.md); already-known ones are linked ther
 
 ## New here
 This is the first Rust solution in the repo, so every construct below is new and
-now lives in the handbook:
+now lives in the handbook. Each line is a one-sentence "what and why"; the full
+treatment is one click away in the handbook.
 - `use std::collections::HashMap;` — [`use` declaration](../../languages/rust.md#use):
-  brings `HashMap` into scope so the full path isn't repeated.
-- `impl Solution { ... }` — [`impl` block](../../languages/rust.md#impl): the
-  wrapper LeetCode's judge expects; it's where methods attach to a type.
+  pulls `HashMap` into scope so we write the short name, not the full path, all loop.
+- `impl Solution { ... }` — [`impl` block](../../languages/rust.md#impl): the wrapper
+  LeetCode's judge expects; it's where a method attaches to a type.
 - `pub fn two_sum(...) -> Vec<i32>` — [`pub fn`](../../languages/rust.md#pub-fn):
-  a public function with typed parameters and a return type after `->`.
+  a public function; parameter types come after the name, the return type after `->`.
 - `Vec<i32>` — [vector type](../../languages/rust.md#vec-type): a growable list of
-  integers, used for both the input and the answer.
+  integers, used here for both the input and the answer.
 - `let mut index_of_seen_value` — [`let mut`](../../languages/rust.md#let-mut): a
-  mutable binding, needed because we insert into the map while scanning.
+  *changeable* binding — needed because we insert into the map on every pass; a plain
+  immutable `let` would reject the next `.insert`.
 - `HashMap<i32, i32>` / `HashMap::new()` —
   [`HashMap`](../../languages/rust.md#hashmap): Rust's spelling of the
-  [hash map](../../glossary/hash-map.md) concept.
-- `for (current_index, &current_value) in numbers.iter().enumerate()` —
+  [hash map](../../glossary/hash-map.md) concept, the structure the whole trick rests on.
+- `numbers.iter().enumerate()` —
   [`for` + `.iter()` + `.enumerate()`](../../languages/rust.md#for-iter-enumerate):
-  loops over values *and* their positions at once.
+  one loop that hands us each value *and* its position.
 - `&current_value` and `Some(&earlier_index)` —
-  [`&` in patterns](../../languages/rust.md#ref-pattern): peels the reference off
-  so we work with plain `i32` values.
-- `if let Some(&earlier_index) = ...get(&needed_value)` —
-  [`if let` with `Option`](../../languages/rust.md#if-let): runs the block only
-  when the lookup actually found something.
-- `current_index as i32` — [`as` cast](../../languages/rust.md#as-cast): converts
-  the `usize` index into the `i32` the answer vector holds.
+  [`&` in patterns](../../languages/rust.md#ref-pattern): peels the reference so we
+  hold a plain `i32` instead of a pointer to one.
+- `if let Some(...) = ...get(&needed_value)` —
+  [`if let` with `Option`](../../languages/rust.md#if-let): runs the block only when
+  the lookup actually found something — Rust's no-`null` answer to "was it there?".
+- `current_index as i32` — [`as` cast](../../languages/rust.md#as-cast): converts the
+  `usize` position into the `i32` the answer vector holds, because Rust won't mix
+  number types silently.
 - `vec![earlier_index, current_index as i32]` / `vec![]` —
   [`vec![]` macro](../../languages/rust.md#vec-macro): builds the result vector.
 
 ## Line by line
+The first Rust solution in the repo, so this walks the whole thing top to bottom. The
+goal is that each line *clicks*, not just that you can read past it.
+
+**The signature.**
+```rust
+pub fn two_sum(numbers: Vec<i32>, target: i32) -> Vec<i32> {
+```
+Read it left to right: a public function `two_sum` taking a list of integers
+(`numbers: Vec<i32>`) and one integer (`target: i32`), handing back a list of
+integers (`-> Vec<i32>`). The function *owns* `numbers` — it's passed by value, not
+borrowed — which is fine here because we only read it. We return a `Vec` rather than
+a tidy pair because that's the exact shape LeetCode's judge checks for.
+
+**The map.**
 ```rust
 let mut index_of_seen_value: HashMap<i32, i32> = HashMap::new();
 ```
-Start an empty map from each number we've passed to the index where we saw it.
+The type spelled out is `HashMap<i32, i32>`: the **key** is a value we've already
+walked past, and the data stored under it is the **index** where we saw that value.
+So a key of `7` pointing to `0` reads as "the number 7 lives at position 0." It's
+`mut` because we add an entry every loop — delete the `mut` and the first `.insert`
+below stops compiling, since Rust forbids changing an immutable binding. The
+`: HashMap<i32, i32>` annotation is there because `HashMap::new()` on its own doesn't
+reveal what it holds; this states the key and value types up front.
 
+**The loop header.**
 ```rust
 for (current_index, &current_value) in numbers.iter().enumerate() {
 ```
-Walk the list once. Each loop hands us the position (`current_index`) and the value
-(`current_value`), with the `&` peeling the reference so `current_value` is a plain
-`i32`.
+Trace what the chain produces, one step at a time:
+- `numbers` is a `Vec<i32>`.
+- `.iter()` walks it *by borrow*, so each item is a `&i32` — a pointer to the number,
+  not the number itself. (Borrowing = looking without taking ownership, so `numbers`
+  survives the loop intact.)
+- `.enumerate()` pairs each item with its position, yielding `(usize, &i32)` — a
+  `usize` is the integer type Rust uses for positions and lengths.
 
+So every turn produces a `(usize, &i32)`, and the pattern `(current_index, &current_value)`
+unpacks it. `current_index` catches the `usize`. The `&` on `&current_value` *peels
+the reference*: because the incoming value is a `&i32`, matching it against
+`&current_value` binds `current_value` to the plain `i32` underneath. Skip that `&`
+and `current_value` would stay a `&i32`, forcing the very next line to read
+`target - *current_value` with a manual dereference. Peeling once here keeps the rest
+of the body in plain numbers.
+
+**The partner.**
 ```rust
     let needed_value = target - current_value;
 ```
-The partner we'd need to hit the target. (No `mut` — it's computed fresh each loop
-and never reassigned.)
+The single number that would complete the pair. Plain `let`, no `mut`: it's computed
+fresh each loop and never reassigned, so it stays immutable by default.
 
+**The lookup.**
 ```rust
     if let Some(&earlier_index) = index_of_seen_value.get(&needed_value) {
         return vec![earlier_index, current_index as i32];
     }
 ```
-Ask the map whether we've already seen that partner. `.get` returns `Some(index)`
-if yes — and `if let` both tests for `Some` and unwraps the stored index in one
-step, so we can return both positions immediately.
+`.get(&needed_value)` asks the map "is this value one of your keys?" It takes the key
+*by reference* and answers with an `Option<&i32>`. Rust has no `null`, so a
+maybe-missing result comes wrapped: `Some(x)` means found (with `x` inside) and `None`
+means not found. The `if let Some(&earlier_index) = ...` does two jobs in one line —
+it tests for the "found" case *and*, on a hit, lifts the inner value out and binds it.
+That inner value is itself a `&i32`, so the `&earlier_index` peels it down to a plain
+`i32`, the same move as in the loop header. On a miss the block is simply skipped.
+Inside, `current_index as i32` converts the `usize` position to the `i32` the answer
+holds (Rust won't do that conversion silently), and `vec![...]` packs both positions
+into the result we return immediately — the first match is the answer.
 
+**The store.**
 ```rust
     index_of_seen_value.insert(current_value, current_index as i32);
 ```
-Not found yet, so file the current value away so a *later* number can find it.
+Reached only when the partner *wasn't* already in the map. We file the current value
+→ its index so a *later* number can find it. This runs after the lookup on purpose:
+checking before storing is what stops a number from matching itself.
 
+**The fallback.**
 ```rust
 vec![]
 ```
-Unreachable given the problem's "exactly one answer" guarantee, but Rust needs
-every path to return a `Vec<i32>`, so we hand back an empty one.
+The last expression in the body, with no trailing semicolon, *is* the function's
+return value — so this hands back an empty `Vec<i32>`. The problem guarantees an
+answer exists, so we never actually arrive here, but every path through a Rust
+function must produce the declared return type, and the compiler rejects the function
+without it.
