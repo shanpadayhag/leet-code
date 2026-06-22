@@ -9,3 +9,4 @@ only as deep as you need.
 |---|---|
 | [Big-O Notation](big-o-notation.md) | Shorthand for how much slower (or more memory-hungry) a method gets as the input grows. |
 | [Hash Map](hash-map.md) | A container that stores key → value pairs and can find any key almost instantly. |
+| [Linked List](linked-list.md) | A chain of nodes, each holding one value and a pointer to the next. |

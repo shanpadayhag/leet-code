@@ -42,6 +42,8 @@ matter what.
 
 ## Related
 - [Hash Map](hash-map.md)
+- [Linked List](linked-list.md)
 
 ## Shows up in
 - [1. Two Sum](../problems/0001-two-sum/README.md)
+- [2. Add Two Numbers](../problems/0002-add-two-numbers/README.md)
