@@ -47,3 +47,4 @@ How each language spells this concept:
 
 ## Shows up in
 - [1. Two Sum](../problems/0001-two-sum/README.md)
+- [3. Longest Substring Without Repeating Characters](../problems/0003-longest-substring-without-repeating-characters/README.md)

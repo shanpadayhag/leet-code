@@ -13,6 +13,7 @@ re-derive it, and **document** it well enough to grab the answer at a glance lat
 |---|-------|-----------|-----------|---------|
 | 1 | [Two Sum](problems/0001-two-sum/README.md) | Easy | Rust | [Hash Map](glossary/hash-map.md) |
 | 2 | [Add Two Numbers](problems/0002-add-two-numbers/README.md) | Medium | Rust | [Linked List](glossary/linked-list.md) |
+| 3 | [Longest Substring Without Repeating Characters](problems/0003-longest-substring-without-repeating-characters/README.md) | Medium | Rust | [Sliding Window](glossary/sliding-window.md) |
 
 ## Glossary
 

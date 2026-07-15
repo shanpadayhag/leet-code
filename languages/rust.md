@@ -23,6 +23,10 @@ how to program in *some* language — just not Rust yet.
 - [`Option::take`](#option-take)
 - [`Option::as_mut`](#option-as-mut)
 - [`.unwrap()`](#unwrap)
+- [`String` — an owned string](#string)
+- [`.chars()` — iterate a string by character](#chars)
+- [`usize` and underflow](#usize)
+- [`.max()` / `.min()` — pick the larger or smaller](#ord-max)
 
 ## `use` declarations {#use}
 
@@ -316,3 +320,97 @@ just set `result_tail.next = Some(...)`, so the value is provably present; we us
 [`if let`](#if-let) or a `match`, which handle the `None` case instead of exploding.
 
 First seen in: [2. Add Two Numbers](../problems/0002-add-two-numbers/solution.rs.md)
+
+## `String` — an owned string {#string}
+
+**In one line:** a growable, owned piece of text — the string type you get handed
+when a function *owns* its text input.
+
+Rust has two main string types, and the split trips up newcomers:
+- `String` — owns its text on the heap, can grow and shrink. This is what
+  `length_of_longest_substring(text: String)` receives: the function takes ownership
+  of the whole string.
+- `&str` — a *borrowed view* into text someone else owns (a "string slice"). A
+  literal like `"abc"` is a `&str`.
+
+Think of `String` as owning the notebook and `&str` as being allowed to read a page
+of someone else's notebook. Here we only read `text`, so `&str` would also have worked —
+but LeetCode's signature hands us an owned `String`, so that's what we take. We never
+need to reach for the difference in this solution; we immediately walk it with
+[`.chars()`](#chars).
+
+First seen in: [3. Longest Substring Without Repeating Characters](../problems/0003-longest-substring-without-repeating-characters/solution.rs.md)
+
+## `.chars()` — iterate a string by character {#chars}
+
+**In one line:** walks a string one *character* at a time, rather than one raw byte
+at a time.
+
+Rust text is stored as UTF-8, where one character can take several bytes. So Rust
+makes you say *how* you want to walk it, and `.chars()` is the "give me whole
+characters" choice.
+
+**What types are flowing.** Trace `for (current_index, current_char) in text.chars().enumerate()`:
+- `text` is a `String`
+- `.chars()` yields `char` — each Unicode character, **by value** (a `char` is a
+  cheap 4-byte `Copy` type, so you get your own copy, not a reference)
+- `.enumerate()` wraps each into `(usize, char)`, counting from 0
+
+So each loop item is a `(usize, char)`, unpacked into `current_index` and
+`current_char`.
+
+**Why no `&` peel here?** Compare with the [`.iter()` loop in Two Sum](#for-iter-enumerate),
+where we wrote `&current_value` to strip a reference. That was needed because
+`.iter()` yields *references* (`&i32`). `.chars()` is different — it yields owned
+`char` values outright, so there's nothing to peel and the pattern is a plain
+`current_char`. One fewer `&` to remember, purely because of what the iterator
+produces.
+
+**A word on the index.** `current_index` here counts **characters**, not bytes —
+because `.enumerate()` numbers the items `.chars()` produces. That's exactly what we
+want for measuring a substring's length in characters.
+
+First seen in: [3. Longest Substring Without Repeating Characters](../problems/0003-longest-substring-without-repeating-characters/solution.rs.md)
+
+## `usize` and underflow {#usize}
+
+**In one line:** `usize` is Rust's *unsigned* integer for sizes and positions — it
+can't go negative, and subtracting past zero **crashes** rather than wrapping to a
+minus number.
+
+Positions and lengths in Rust are `usize` (an unsigned integer: zero or above,
+never negative). That's why `current_index` and `window_start` are `usize`. The
+catch: because it can't represent `-1`, a subtraction like `a - b` where `b > a`
+doesn't give a negative — in debug builds it **panics** (crashes), and in release
+builds it silently wraps to a huge number. Either way it's a bug.
+
+So `current_index - window_start + 1` is only safe because we can *prove*
+`window_start` never passes `current_index`. And we can: `window_start` only ever
+jumps to `previous_index + 1`, and `previous_index` is always an earlier position
+than `current_index`, so `window_start ≤ current_index` at that line — the
+subtraction is always `≥ 0`. When you subtract `usize` values, always check that the
+left side can't dip below the right.
+
+First seen in: [3. Longest Substring Without Repeating Characters](../problems/0003-longest-substring-without-repeating-characters/solution.rs.md)
+
+## `.max()` / `.min()` — pick the larger or smaller {#ord-max}
+
+**In one line:** `a.max(b)` returns whichever of `a` and `b` is bigger; `.min()`
+returns the smaller.
+
+Any two values that can be ordered (all the number types, for instance) support
+`.max()` and `.min()` as methods. `longest = longest.max(current_index - window_start + 1)`
+reads as "set `longest` to the bigger of its current value and the new window
+width" — the standard way to keep a running maximum without an `if`.
+
+**The "without it" version.** You could write it by hand:
+```rust
+let width = current_index - window_start + 1;
+if width > longest {
+    longest = width;
+}
+```
+Same effect, three lines instead of one. `.max()` is just the tidy, idiomatic form
+of that comparison, and it reads as exactly what it does.
+
+First seen in: [3. Longest Substring Without Repeating Characters](../problems/0003-longest-substring-without-repeating-characters/solution.rs.md)
