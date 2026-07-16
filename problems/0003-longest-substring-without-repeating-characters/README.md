@@ -124,9 +124,45 @@ have moved it *backward* and corrupted the window. Checking `0 ≥ left` first (
 isn't) is what keeps us honest: we leave the left edge alone and the window grows to
 `"ba"`.
 
+### Watch it run on a messier string
+`"abba"` was short. Let's do a longer, trickier one — `s = "tmmzuxt"` — because it
+shows both cases *and* a case where the window keeps growing for a long stretch
+before the twist at the very end. Positions: `t`=0, `m`=1, `m`=2, `z`=3, `u`=4,
+`x`=5, `t`=6.
+
+| Step | Right edge (index) | Seen this character before? | Move left edge? | Window | Width | Longest so far | Map afterwards |
+|---|---|---|---|---|---|---|---|
+| 1 | `t` (0) | no | left stays `0` | `t` | 1 | 1 | `{t: 0}` |
+| 2 | `m` (1) | no | left stays `0` | `tm` | 2 | 2 | `{t: 0, m: 1}` |
+| 3 | `m` (2) | yes, at index `1` — inside window (`1 ≥ 0`) | jump left to `2` | `m` | 1 | 2 | `{t: 0, m: 2}` |
+| 4 | `z` (3) | no | left stays `2` | `mz` | 2 | 2 | `{t: 0, m: 2, z: 3}` |
+| 5 | `u` (4) | no | left stays `2` | `mzu` | 3 | 3 | `{t: 0, m: 2, z: 3, u: 4}` |
+| 6 | `x` (5) | no | left stays `2` | `mzux` | 4 | 4 | `{t: 0, m: 2, z: 3, u: 4, x: 5}` |
+| 7 | `t` (6) | yes, at index `0` — **outside** window (`0 < 2`) | left stays `2` | `mzuxt` | 5 | 5 | `{t: 6, m: 2, z: 3, u: 4, x: 5}` |
+
+Walk the story it tells:
+
+- **Step 3 — the genuine repeat.** The second `m` clashes with the `m` still sitting
+  in the window at index 1, so we haul the left edge to index 2, throwing out the old
+  `m` (and the `t` before it). The window resets to a clean `"m"`.
+- **Steps 4–6 — free growth.** `z`, `u`, `x` are all new, so the right edge just
+  keeps marching and the window fattens up: `mz`, `mzu`, `mzux`. The best width climbs
+  to 4 without the left edge moving at all.
+- **Step 7 — the twist, and it's the one that wins.** The final `t` *was* seen — way
+  back at index 0. But the window now starts at index 2, so that old `t` is long gone,
+  outside the window. The `0 ≥ left` test fails (`0 < 2`), so we **don't** move the
+  left edge, and the window grows to `"mzuxt"` — width **5**. Had we naively jumped the
+  edge on "seen before," we'd have wrongly shrunk the window and *missed the real
+  answer*.
+
+Notice too that the map's entry for `t` quietly updates from `0` to `6` in the last
+step: we always record a character's *most recent* position, so future clashes are
+measured against where we last saw it, not where we first did.
+
 ### The answer
-The longest width we ever recorded is **2**, so the answer is `2` (`"ab"` or
-`"ba"`).
+For `"abba"` the widest window was **2** (`"ab"` or `"ba"`); for `"tmmzuxt"` it was
+**5** (`"mzuxt"`). In each case the answer is simply the largest width we ever
+recorded.
 
 Why is this guaranteed correct? Two facts. **The window is always repeat-free** —
 every time a new character would clash with one still inside, we immediately move
